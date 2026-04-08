@@ -1,0 +1,267 @@
+apiVersion: v1
+data:
+  dashboard-provider.yaml: |
+    apiVersion: 1
+
+    providers:
+      - name: agricultura-precision
+        orgId: 1
+        folder: "Agricultura de Precisión"
+        folderUid: agricultura
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /etc/grafana/provisioning/dashboards
+          foldersFromFilesStructure: false
+  datasource.yaml: |
+    apiVersion: 1
+
+    datasources:
+      - name: TimescaleDB
+        uid: timescaledb-ds
+        type: postgres
+        url: timescaledb:5432
+        database: agriculture
+        user: admin
+        secureJsonData:
+          password: $POSTGRES_PASSWORD
+        jsonData:
+          sslmode: disable
+          postgresVersion: 1600
+          timescaledb: true
+        isDefault: true
+        editable: false
+  sensores.json: |
+    {
+      "__inputs": [],
+      "__requires": [
+        {"type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0"},
+        {"type": "datasource", "id": "postgres", "name": "PostgreSQL", "version": "1.0.0"},
+        {"type": "panel", "id": "timeseries", "name": "Time series", "version": ""},
+        {"type": "panel", "id": "table", "name": "Table", "version": ""},
+        {"type": "panel", "id": "stat", "name": "Stat", "version": ""}
+      ],
+      "description": "Monitoreo en tiempo real de sensores IoT agrícolas con predicción de riego",
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+          "id": 10,
+          "title": "Variables Ambientales",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"lineWidth": 2, "fillOpacity": 10},
+              "unit": "celsius",
+              "min": 15,
+              "max": 40
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 1},
+          "id": 1,
+          "options": {
+            "legend": {"calcs": ["mean", "min", "max"], "displayMode": "table", "placement": "bottom"},
+            "tooltip": {"mode": "multi"}
+          },
+          "targets": [
+            {
+              "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+              "rawSql": "SELECT\n  time_bucket('30 seconds', time) AS time,\n  AVG(temperatura) FILTER (WHERE sensor_id = 'sensor-01') AS \"Sensor 01\",\n  AVG(temperatura) FILTER (WHERE sensor_id = 'sensor-02') AS \"Sensor 02\",\n  AVG(temperatura) FILTER (WHERE sensor_id = 'sensor-03') AS \"Sensor 03\"\nFROM sensor_readings\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
+              "format": "time_series",
+              "refId": "A"
+            }
+          ],
+          "title": "Temperatura por Sensor (°C)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"lineWidth": 2, "fillOpacity": 10},
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 1},
+          "id": 2,
+          "options": {
+            "legend": {"calcs": ["mean", "min", "max"], "displayMode": "table", "placement": "bottom"},
+            "tooltip": {"mode": "multi"}
+          },
+          "targets": [
+            {
+              "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+              "rawSql": "SELECT\n  time_bucket('30 seconds', time) AS time,\n  AVG(humedad) FILTER (WHERE sensor_id = 'sensor-01') AS \"Sensor 01\",\n  AVG(humedad) FILTER (WHERE sensor_id = 'sensor-02') AS \"Sensor 02\",\n  AVG(humedad) FILTER (WHERE sensor_id = 'sensor-03') AS \"Sensor 03\"\nFROM sensor_readings\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
+              "format": "time_series",
+              "refId": "A"
+            }
+          ],
+          "title": "Humedad Relativa por Sensor (%)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"lineWidth": 2, "fillOpacity": 10},
+              "decimals": 2,
+              "min": 5.0,
+              "max": 8.0
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 9},
+          "id": 3,
+          "options": {
+            "legend": {"calcs": ["mean", "min", "max"], "displayMode": "table", "placement": "bottom"},
+            "tooltip": {"mode": "multi"}
+          },
+          "targets": [
+            {
+              "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+              "rawSql": "SELECT\n  time_bucket('30 seconds', time) AS time,\n  AVG(ph) FILTER (WHERE sensor_id = 'sensor-01') AS \"Sensor 01\",\n  AVG(ph) FILTER (WHERE sensor_id = 'sensor-02') AS \"Sensor 02\",\n  AVG(ph) FILTER (WHERE sensor_id = 'sensor-03') AS \"Sensor 03\"\nFROM sensor_readings\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
+              "format": "time_series",
+              "refId": "A"
+            }
+          ],
+          "title": "pH del Suelo por Sensor",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"lineWidth": 2, "fillOpacity": 20},
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "orange", "value": 0.3},
+                  {"color": "red", "value": 0.6}
+                ]
+              }
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 9},
+          "id": 4,
+          "options": {
+            "legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom"},
+            "tooltip": {"mode": "multi"}
+          },
+          "targets": [
+            {
+              "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+              "rawSql": "SELECT\n  time_bucket('1 minute', time) AS time,\n  AVG(CASE WHEN sensor_id = 'sensor-01' THEN prediccion_confianza END) AS \"Sensor 01\",\n  AVG(CASE WHEN sensor_id = 'sensor-02' THEN prediccion_confianza END) AS \"Sensor 02\",\n  AVG(CASE WHEN sensor_id = 'sensor-03' THEN prediccion_confianza END) AS \"Sensor 03\"\nFROM sensor_readings\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
+              "format": "time_series",
+              "refId": "A"
+            }
+          ],
+          "title": "Confianza del Modelo ML por Sensor",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 17},
+          "id": 11,
+          "title": "Alertas de Riego y Estadísticas",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "orange", "value": 30},
+                  {"color": "red", "value": 60}
+                ]
+              },
+              "unit": "percent",
+              "mappings": []
+            }
+          },
+          "gridPos": {"h": 6, "w": 8, "x": 0, "y": 18},
+          "id": 5,
+          "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto", "textMode": "auto", "colorMode": "background"},
+          "targets": [
+            {
+              "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+              "rawSql": "SELECT\n  sensor_id AS metric,\n  ROUND(100.0 * SUM(necesita_riego::int) / NULLIF(COUNT(*), 0), 1) AS value\nFROM sensor_readings\nWHERE time >= NOW() - INTERVAL '1 hour'\nGROUP BY sensor_id\nORDER BY sensor_id",
+              "format": "table",
+              "refId": "A"
+            }
+          ],
+          "title": "% Alertas de Riego (última hora)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+          "fieldConfig": {
+            "defaults": {"custom": {"displayMode": "auto"}},
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "necesita_riego"},
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {"options": {"true": {"color": "red", "text": "RIEGO"}, "false": {"color": "green", "text": "OK"}}, "type": "value"}
+                    ]
+                  },
+                  {"id": "custom.displayMode", "value": "color-background"}
+                ]
+              }
+            ]
+          },
+          "gridPos": {"h": 10, "w": 16, "x": 8, "y": 18},
+          "id": 6,
+          "options": {"footer": {"show": false}, "showHeader": true, "sortBy": [{"displayName": "time", "desc": true}]},
+          "targets": [
+            {
+              "datasource": {"type": "postgres", "uid": "timescaledb-ds"},
+              "rawSql": "SELECT\n  time,\n  sensor_id,\n  ROUND(temperatura::numeric, 1) AS temperatura,\n  ROUND(humedad::numeric, 1)     AS humedad,\n  ROUND(ph::numeric, 2)          AS ph,\n  necesita_riego,\n  ROUND(prediccion_confianza::numeric, 2) AS confianza\nFROM sensor_readings\nORDER BY time DESC\nLIMIT 30",
+              "format": "table",
+              "refId": "A"
+            }
+          ],
+          "title": "Últimas 30 lecturas con predicción ML",
+          "type": "table"
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 38,
+      "tags": ["iot", "agricultura", "precision", "tesis"],
+      "templating": {"list": []},
+      "time": {"from": "now-30m", "to": "now"},
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Monitoreo de Sensores IoT — Agricultura de Precisión",
+      "uid": "agricultura-precision-v1",
+      "version": 1
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: grafana-provisioning
+  namespace: agricultura

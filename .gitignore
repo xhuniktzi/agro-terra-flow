@@ -1,0 +1,39 @@
+# Entorno virtual de Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Variables de entorno (el template .env.example sí se versiona)
+.env
+
+# Modelo serializado (se regenera con src/ml/train.py)
+model/model.pkl
+
+# Datos de volúmenes locales
+nats_data/
+timescaledb_data/
+grafana_data/
+
+# Kubeconfig descargado
+k3s.yaml
+kubeconfig
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+*.tar
+
+# Logs
+*.log

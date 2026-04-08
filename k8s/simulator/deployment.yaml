@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulator
+  namespace: agricultura
+  labels:
+    app: simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simulator
+  template:
+    metadata:
+      labels:
+        app: simulator
+    spec:
+      nodeSelector:
+        role: apps
+      initContainers:
+        - name: wait-for-nats
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z nats 1883; do
+                echo "Esperando NATS MQTT..."; sleep 3
+              done
+              echo "Esperando 25s para inicialización del procesador..."
+              sleep 25
+      containers:
+        - name: simulator
+          image: <tu-usuario>/agricultura-simulator:latest
+          imagePullPolicy: Always
+          env:
+            - name: MQTT_HOST
+              value: nats
+            - name: MQTT_PORT
+              value: "1883"
+            - name: PUBLISH_INTERVAL_SECONDS
+              value: "5"
+            - name: STARTUP_DELAY_SECONDS
+              value: "0"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
